@@ -66,7 +66,7 @@ void merge_sort(int *a, int p, int r)
 
 int main(void)
 {
-    int a[5] = {3, 5, 2, 1, 4};
+    int a[7] = {3, 5, 2, 1, 4, 7, 6};
     int size = sizeof(a) / sizeof(a[0]);
     printf("Before sorting:\n");
     for (int i = 0; i < size; i++)
