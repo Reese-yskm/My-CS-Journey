@@ -1,62 +1,71 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <ctime>   // 必须加
+#include <cstdlib> // 必须加
 
 using namespace std;
 
 int partition(vector<int> &a, int l, int r)
 {
-    // 随机化：防止遇到有序数组退化成 O(n^2)
+    // 随机化优化
     int randomIndex = l + rand() % (r - l + 1);
     swap(a[randomIndex], a[r]);
-    int pivot = r;
+
+    int pivot = a[r];
     int i = l - 1;
-    for (int j = l; j < pivot; j++)
+    for (int j = l; j < r; j++)
     {
-        if (a[j] <= a[pivot])
+        if (a[j] <= pivot)
         {
             i++;
             swap(a[i], a[j]);
         }
     }
-    swap(a[i + 1], a[pivot]);
+    swap(a[i + 1], a[r]);
     return i + 1;
 }
-int find_kth(vector<int> &a, int l, int r, int k)
+
+// 迭代版：比递归更稳健，更省内存
+int find_kth_iterative(vector<int> &a, int k)
 {
-    int t = partition(a, l, r);
-    if (k == t)
+    int l = 0, r = a.size() - 1;
+    while (l <= r)
     {
-        return a[k];
+        int t = partition(a, l, r);
+        if (t == k)
+            return a[t];
+        else if (k < t)
+            r = t - 1;
+        else
+            l = t + 1;
     }
-    else if (k < t)
-    {
-        return find_kth(a, l, t - 1, k);
-    }
-    else
-    {
-        return find_kth(a, t + 1, r, k); // 一定注意偏移量的问题
-    }
+    return -1; // 理论上不会走到这里
 }
 
 int main()
 {
+    srand(time(0)); // 播种随机数
     ios::sync_with_stdio(false);
     cin.tie(NULL);
-    cout << "Please enter the length of the array:\n";
-    int n;
-    cin >> n;
+
+    int n, k;
+    if (!(cin >> n))
+        return 0;
     vector<int> a(n);
-    cout << "Please enter every element:\n";
     for (int i = 0; i < n; i++)
-    {
         cin >> a[i];
-    }
-    cout << "Please enter the k:\n";
-    int k;
     cin >> k;
-    int len = a.size();
-    int res = find_kth(a, 0, len - 1, k);
+
+    // 防御性编程：检查 k 的合法性
+    if (k < 0 || k >= n)
+    {
+        cout << "Error: k is out of bounds!" << endl;
+        return 0;
+    }
+
+    int res = find_kth_iterative(a, k);
     cout << "The k_th number is: " << res << endl;
+
     return 0;
 }
