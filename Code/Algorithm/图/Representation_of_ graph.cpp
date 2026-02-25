@@ -19,6 +19,7 @@ int main()
     {
         int i, j;
         cin >> i >> j;
+        // 注意是双向
         graph[i][j] = 1;
         graph[j][i] = 1;
         adj[i].push_back(j);
