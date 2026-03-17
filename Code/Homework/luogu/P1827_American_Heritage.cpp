@@ -79,6 +79,8 @@ void getPostOrder(string in, string pre)
     // 前序从 k+1 开始到最后
     getPostOrder(in.substr(k + 1), pre.substr(k + 1));
 
+    // 技巧：substr()如果不传第二个参数是直接读到末尾；
+
     // 5. 打印根节点（最后打印，符合后序逻辑）
     cout << root;
 }
