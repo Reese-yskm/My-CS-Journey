@@ -115,12 +115,23 @@ int main()
     if (!(cin >> m >> k >> c_val))
         return 0;
 
-    // 1. 预处理组合数 (杨辉三角)
-    for (int i = 0; i <= 10; i++)
+    // 数组建议开到 15x15 以上，防止这道题 m+k 的偏移
+    long long C[20][20];
+
+    for (int i = 0; i <= k; i++)
     {
-        C[i][0] = 1;
+        C[i][0] = 1; // 每一行的起点
         for (int j = 1; j <= i; j++)
-            C[i][j] = (C[i - 1][j - 1] + C[i - 1][j]) % MOD;
+        {
+            if (j == i)
+            {
+                C[i][j] = 1; // 每一行的斜边末尾，直接给1，不查上一行右侧
+            }
+            else
+            {
+                C[i][j] = (C[i - 1][j - 1] + C[i - 1][j]) % MOD;
+            }
+        }
     }
 
     vector<ll> a(m + 1), f(m + 1), b(k + 1);
