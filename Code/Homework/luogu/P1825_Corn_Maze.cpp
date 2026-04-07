@@ -117,7 +117,7 @@ int main()
                 // 注意：这里标记和判断的必须是【突变后】的坐标 (tx, ty)
                 if (!visited[tx][ty])
                 {
-                    visited[tx][ty] = true;
+                    visited[tx][ty] = true; // 一定要先标记在入队!!!
                     q.push({tx, ty, cur.time + 1});
                 }
             }
