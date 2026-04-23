@@ -197,13 +197,46 @@ Listnode *reverseKGroup(Listnode *head, int k)
         pre = start;
     }
 }
+
+Listnode *mergeTwoOrderedLists(Listnode *l1, Listnode *l2)
+{
+    Listnode *dummy = new Listnode(0);
+    Listnode *cur = dummy;
+    while (l1 && l2)
+    {
+        if (l1->val < l2->val)
+        {
+            cur->next = l1;
+            l1 = l1->next;
+        }
+        else
+        {
+            cur->next = l2;
+            l2 = l2->next;
+        }
+        cur = cur->next;
+    }
+    if (l1)
+    {
+        cur->next = l1;
+    }
+    if (l2)
+    {
+        cur->next = l2;
+    }
+    return dummy->next;
+}
+
 int main()
 {
     vector<int> arr = {1, 2, 3, 4, 5, 6, 7};
+    vector<int> b = {1, 3, 5};
+    vector<int> c = {2, 4, 6};
     Listnode *my_list = init_List(arr);
-
-    cout << "Original list: ";
-    print__each_value(my_list);
+    Listnode *l1 = init_List(b);
+    Listnode *l2 = init_List(c);
+    // cout << "Original list: ";
+    // print__each_value(my_list);
 
     // // Check for cycle
     // cout << (hasCycle(my_list) ? "Cycle detected" : "No cycle") << "\n";
@@ -245,7 +278,10 @@ int main()
     // cout << "swap in pair: ";
     // print__each_value(swapPairs(my_list));
 
-    cout << "swap in k group: ";
-    print__each_value(reverseKGroup(my_list, 3));
+    // cout << "swap in k group: ";
+    // print__each_value(reverseKGroup(my_list, 3));
+
+    cout << "After merge: ";
+    print__each_value(mergeTwoOrderedLists(l1, l2));
     return 0;
 }
