@@ -103,7 +103,17 @@ void initialisePlayer(Player &player);
 void printMap(const Grid &map, const Player &player);
 string tileToString(const Tile &tile);
 bool playerAt(const Player &player, int row, int col);
-
+bool canPlaceWall(const Grid &map, const Player &player, int row, int col);
+void placeWalls(Grid &map, const Player &player);
+bool playerCanMoveTo(const Grid &map, int row, int col);
+void movePlayer(Grid &map, Player &player, char command);
+void commandLoop(Grid &map, Player &player);
+bool canPlaceItem(const Grid &map, const Player &player, int row, int col);
+void placeKeyAndExit(Grid &map, const Player &player);
+void updateExit(Grid &map, const Player &player);
+void handlePlayerTile(Grid &map, Player &player);
+bool playerWon(const Grid &map, const Player &player);
+bool endStep(const Grid &map, Player &player);
 // ================================
 // Main
 // ================================
@@ -118,7 +128,12 @@ int main()
     initialisePlayer(player);
 
     printMap(map, player);
-
+    // 放置墙
+    placeWalls(map, player);
+    // 放置钥匙
+    placeKeyAndExit(map, player);
+    // 主循环
+    commandLoop(map, player);
     return 0;
 }
 
@@ -284,4 +299,192 @@ void printMap(const Grid &map, const Player &player)
         cout << "+---";
     }
     cout << "+" << endl;
+}
+
+// ================================
+// My funtion
+// ================================
+
+bool canPlaceWall(const Grid &map, const Player &player, int row, int col)
+{
+    if (!inMap(row, col))
+    {
+        return false;
+    }
+    if (row == player.row && col == player.col)
+    {
+        return false;
+    }
+    if (map[row][col].type != TileType::Empty)
+    {
+        return false;
+    }
+    return true;
+}
+void placeWalls(Grid &map, const Player &player)
+{
+    int count;
+    cout << "How many walls:";
+    cin >> count;
+    while (count--)
+    {
+        int wall_row, wall_col;
+        cin >> wall_row >> wall_col;
+        if (canPlaceWall(map, player, wall_row, wall_col))
+        {
+            map[wall_row][wall_col].type = TileType::Wall;
+            cout << "Place successfully!\n";
+        }
+        else
+        {
+            cout << "Unvalid positon!\n";
+        }
+        printMap(map, player);
+    }
+}
+bool playerCanMoveTo(const Grid &map, int row, int col)
+{
+    if (!inMap(row, col))
+    {
+        return false;
+    }
+    if (map[row][col].type == TileType::Wall)
+    {
+        return false;
+    }
+    return true;
+}
+void movePlayer(Grid &map, Player &player, char command)
+{
+    int finalRow = player.row;
+    int finalCol = player.col;
+    if (command == 'w')
+    {
+        finalRow--;
+    }
+    else if (command == 'a')
+    {
+        finalCol--;
+    }
+    else if (command == 's')
+    {
+        finalRow++;
+    }
+    else if (command == 'd')
+    {
+        finalCol++;
+    }
+    if (playerCanMoveTo(map, finalRow, finalCol))
+    {
+        player.row = finalRow;
+        player.col = finalCol;
+        handlePlayerTile(map, player);
+    }
+    else
+    {
+        cout << "Unvalid move!\n";
+    }
+}
+void commandLoop(Grid &map, Player &player)
+{
+
+    while (true)
+    {
+        cout << "Please enter the diretion:";
+        char command;
+        cin >> command;
+        if (command == 'q')
+        {
+            cout << "Game quit!\n";
+            break;
+        }
+        movePlayer(map, player, command);
+        printMap(map, player);
+        if (endStep(map, player))
+        {
+            break;
+        }
+    }
+}
+bool canPlaceItem(const Grid &map, const Player &player, int row, int col)
+{
+    if (!inMap(row, col))
+    {
+        return false;
+    }
+    if (row == player.row && col == player.col)
+    {
+        return false;
+    }
+    if (map[row][col].type != TileType::Empty)
+    {
+        return false;
+    }
+    return true;
+}
+void placeKeyAndExit(Grid &map, const Player &player)
+{
+    cout << "Please enter key potsition:";
+    int key_row, key_col;
+    cin >> key_row >> key_col;
+    while (!canPlaceItem(map, player, key_row, key_col))
+    {
+        cout << "Unvalid place!Please palce the key again:";
+        cin >> key_row >> key_col;
+    }
+    cout << "Place successfully!\n";
+    map[key_row][key_col].type = TileType::Key;
+    printMap(map, player);
+
+    cout << "Please enter exit potsition:";
+    int exit_row, exit_col;
+    cin >> exit_row >> exit_col;
+    while (!canPlaceItem(map, player, exit_row, exit_col))
+    {
+        cout << "Unvalid place!Please palce the exit again:";
+        cin >> exit_row >> exit_col;
+    }
+    cout << "Place successfully!\n";
+    map[exit_row][exit_col].type = TileType::ExitLocked;
+    printMap(map, player);
+}
+void updateExit(Grid &map, const Player &player)
+{
+    if (!player.hasKey)
+    {
+        return;
+    }
+    for (int r = 0; r < ROWS; r++)
+    {
+        for (int c = 0; c < COLS; c++)
+        {
+            if (map[r][c].type == TileType::ExitLocked)
+            {
+                map[r][c].type = TileType::ExitOpen;
+            }
+        }
+    }
+}
+void handlePlayerTile(Grid &map, Player &player)
+{
+    if (map[player.row][player.col].type != TileType::Key)
+    {
+        return;
+    }
+    map[player.row][player.col].type = TileType::Empty;
+    player.hasKey = true;
+    updateExit(map, player);
+}
+bool playerWon(const Grid &map, const Player &player)
+{
+    return map[player.row][player.col].type == TileType::ExitOpen;
+}
+bool endStep(const Grid &map, Player &player)
+{
+    if (playerWon(map, player))
+    {
+        cout << "You escaped the dungeon!";
+        return true;
+    }
+    return false;
 }
