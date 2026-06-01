@@ -114,6 +114,12 @@ void updateExit(Grid &map, const Player &player);
 void handlePlayerTile(Grid &map, Player &player);
 bool playerWon(const Grid &map, const Player &player);
 bool endStep(const Grid &map, Player &player);
+bool canPlaceTrap(const Grid &map, const Player &player, int row, int col);
+void placeTraps(Grid &map, const Player &player);
+void triggerTrap(Grid &map, const Player &player);
+void updateTrapStates(Grid &map);
+bool playerOnFire(const Grid &map, const Player &player);
+void upkeepStep(Grid &map, Player &player);
 // ================================
 // Main
 // ================================
@@ -132,6 +138,8 @@ int main()
     placeWalls(map, player);
     // 放置钥匙
     placeKeyAndExit(map, player);
+    // 放置陷阱
+    placeTraps(map, player);
     // 主循环
     commandLoop(map, player);
     return 0;
@@ -379,6 +387,7 @@ void movePlayer(Grid &map, Player &player, char command)
         player.row = finalRow;
         player.col = finalCol;
         handlePlayerTile(map, player);
+        triggerTrap(map, player);
     }
     else
     {
@@ -399,6 +408,7 @@ void commandLoop(Grid &map, Player &player)
             break;
         }
         movePlayer(map, player, command);
+        upkeepStep(map, player);
         printMap(map, player);
         if (endStep(map, player))
         {
@@ -486,5 +496,104 @@ bool endStep(const Grid &map, Player &player)
         cout << "You escaped the dungeon!";
         return true;
     }
+    if (playerOnFire(map, player))
+    {
+        cout << "You are killed by fire!";
+        return true;
+    }
     return false;
+}
+bool canPlaceTrap(const Grid &map, const Player &player, int row, int col)
+{
+    if (!inMap(row, col))
+    {
+        return false;
+    }
+    if (row == player.row && col == player.col)
+    {
+        return false;
+    }
+    if (map[row][col].type != TileType::Empty)
+    {
+        return false;
+    }
+    return true;
+}
+void placeTraps(Grid &map, const Player &player)
+{
+    int count;
+    cout << "How many traps:";
+    cin >> count;
+    while (count--)
+    {
+        int trap_row, trap_col;
+        cin >> trap_row >> trap_col;
+        if (canPlaceTrap(map, player, trap_row, trap_col))
+        {
+            map[trap_row][trap_col].type = TileType::Trap;
+            map[trap_row][trap_col].trap.state = TrapState::Hidden;
+            cout << "Place successfully!\n";
+        }
+        else
+        {
+            cout << "Unvalid positon!\n";
+        }
+        printMap(map, player);
+    }
+}
+void triggerTrap(Grid &map, const Player &player)
+{
+    if (map[player.row][player.col].type != TileType::Trap)
+    {
+        return;
+    }
+    if (map[player.row][player.col].trap.state == TrapState::Hidden)
+    {
+        map[player.row][player.col].trap.state = TrapState::Armed;
+        map[player.row][player.col].trap.newlyArmed = true;
+    }
+}
+void updateTrapStates(Grid &map)
+{
+    for (int r = 0; r < ROWS; r++)
+    {
+        for (int c = 0; c < COLS; c++)
+        {
+            if (map[r][c].type == TileType::Trap)
+            {
+                if (map[r][c].trap.state == TrapState::Armed)
+                {
+                    if (map[r][c].trap.newlyArmed == false)
+                    {
+                        map[r][c].trap.state = TrapState::Fire;
+                    }
+                    else
+                    {
+                        map[r][c].trap.newlyArmed = false;
+                    }
+                }
+                else if (map[r][c].trap.state == TrapState::Fire)
+                {
+                    map[r][c].trap.state = TrapState::None;
+                    map[r][c].type = TileType::Empty;
+                }
+            }
+        }
+    }
+}
+bool playerOnFire(const Grid &map, const Player &player)
+{
+    if (map[player.row][player.col].trap.state != TrapState::Fire)
+    {
+        return false;
+    }
+    return true;
+}
+void upkeepStep(Grid &map, Player &player)
+{
+    if (playerOnFire(map, player))
+    {
+        player.alive = false;
+    }
+    updateTrapStates(map);
 }
