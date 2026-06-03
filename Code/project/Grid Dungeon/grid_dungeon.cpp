@@ -116,10 +116,13 @@ bool playerWon(const Grid &map, const Player &player);
 bool endStep(const Grid &map, Player &player);
 bool canPlaceTrap(const Grid &map, const Player &player, int row, int col);
 void placeTraps(Grid &map, const Player &player);
-void triggerTrap(Grid &map, const Player &player);
+bool triggerTrap(Grid &map, const Player &player);
 void updateTrapStates(Grid &map);
 bool playerOnFire(const Grid &map, const Player &player);
 void upkeepStep(Grid &map, Player &player);
+bool canPlaceGuard(const Grid &map, const Player &player, int row, int col);
+void placeGuards(Grid &map, const Player &player);
+void alertGuards(Grid &map, int centerRow, int centerCol);
 // ================================
 // Main
 // ================================
@@ -140,6 +143,8 @@ int main()
     placeKeyAndExit(map, player);
     // 放置陷阱
     placeTraps(map, player);
+    // 放置守卫
+    placeGuards(map, player);
     // 主循环
     commandLoop(map, player);
     return 0;
@@ -387,7 +392,6 @@ void movePlayer(Grid &map, Player &player, char command)
         player.row = finalRow;
         player.col = finalCol;
         handlePlayerTile(map, player);
-        triggerTrap(map, player);
     }
     else
     {
@@ -477,13 +481,17 @@ void updateExit(Grid &map, const Player &player)
 }
 void handlePlayerTile(Grid &map, Player &player)
 {
-    if (map[player.row][player.col].type != TileType::Key)
+    if (map[player.row][player.col].type == TileType::Key)
     {
-        return;
+        map[player.row][player.col].type = TileType::Empty;
+        player.hasKey = true;
+        updateExit(map, player);
+        alertGuards(map, player.row, player.col);
     }
-    map[player.row][player.col].type = TileType::Empty;
-    player.hasKey = true;
-    updateExit(map, player);
+    if (triggerTrap(map, player))
+    {
+        alertGuards(map, player.row, player.col);
+    }
 }
 bool playerWon(const Grid &map, const Player &player)
 {
@@ -541,17 +549,19 @@ void placeTraps(Grid &map, const Player &player)
         printMap(map, player);
     }
 }
-void triggerTrap(Grid &map, const Player &player)
+bool triggerTrap(Grid &map, const Player &player)
 {
     if (map[player.row][player.col].type != TileType::Trap)
     {
-        return;
+        return false;
     }
     if (map[player.row][player.col].trap.state == TrapState::Hidden)
     {
         map[player.row][player.col].trap.state = TrapState::Armed;
         map[player.row][player.col].trap.newlyArmed = true;
+        return true;
     }
+    return false;
 }
 void updateTrapStates(Grid &map)
 {
@@ -596,4 +606,70 @@ void upkeepStep(Grid &map, Player &player)
         player.alive = false;
     }
     updateTrapStates(map);
+}
+bool canPlaceGuard(const Grid &map, const Player &player, int row, int col)
+{
+    if (!inMap(row, col))
+    {
+        return false;
+    }
+    if (row == player.row && col == player.col)
+    {
+        return false;
+    }
+    if (map[row][col].type != TileType::Empty)
+    {
+        return false;
+    }
+    return true;
+}
+void placeGuards(Grid &map, const Player &player)
+{
+    int count;
+    cout << "How many guards:";
+    cin >> count;
+    while (count--)
+    {
+        int guard_row, guard_col;
+        cin >> guard_row >> guard_col;
+        if (canPlaceGuard(map, player, guard_row, guard_col))
+        {
+            map[guard_row][guard_col].type = TileType::Guard;
+            map[guard_row][guard_col].guard.state = GuardState::Sleeping;
+            cout << "Place successfully!\n";
+        }
+        else
+        {
+            cout << "Unvalid positon!\n";
+        }
+        printMap(map, player);
+    }
+}
+void alertGuards(Grid &map, int centerRow, int centerCol)
+{
+    int startRow = centerRow - 2;
+    int startCol = centerCol - 2;
+    int endRow = centerRow + 2;
+    int endCol = centerCol + 2;
+
+    for (int row = startRow; row <= endRow; row++)
+    {
+        for (int col = startCol; col <= endCol; col++)
+        {
+            if (!inMap(row, col))
+            {
+                continue;
+            }
+            if (row == centerRow && col == centerCol)
+            {
+                continue;
+            }
+            if (map[row][col].type == TileType::Guard &&
+                map[row][col].guard.state == GuardState::Sleeping)
+            {
+                map[row][col].guard.state = GuardState::Alert;
+                map[row][col].guard.skipNextAction = true;
+            }
+        }
+    }
 }
