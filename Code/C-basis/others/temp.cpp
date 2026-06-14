@@ -1,156 +1,91 @@
-#include <iostream>
-#include <vector>
-#include <cstring>
-
+#include <bits/stdc++.h>
 using namespace std;
-
 typedef long long ll;
-const int MOD = 998244353;
-
-struct Matrix
+// 返回长度不大于k的最大子段和
+ll maxSubarrayAtMostK(const vector<ll> &a, int k)
 {
-    ll v[20][20];
-    int size;
-    Matrix(int s) : size(s)
+    int n = a.size();
+    vector<ll> pre(n + 1, 0);
+    for (int i = 1; i <= n; i++)
     {
-        memset(v, 0, sizeof(v));
+        pre[i] = pre[i - 1] + a[i - 1];
     }
-
-    Matrix operator*(const Matrix &b) const
+    //[l,r]的区间和等于pre[r+1]-pre[l]
+    deque<int> q;
+    q.push_back(0);
+    ll ans = LLONG_MIN;
+    // 枚举右端点后一位
+    for (int i = 1; i <= n; i++)
     {
-        Matrix res(size);
-        for (int i = 0; i < size; i++)
+        while (!q.empty() && q.front() < i - k)
         {
-            for (int k = 0; k < size; k++)
-            {
-                if (v[i][k] == 0)
-                    continue;
-                for (int j = 0; j < size; j++)
-                {
-                    res.v[i][j] = (res.v[i][j] + v[i][k] * b.v[k][j]) % MOD;
-                }
-            }
+            q.pop_front();
         }
-        return res;
+        // 更新最大值
+        if (!q.empty())
+        {
+            ans = max(ans, pre[i] - pre[q.front()]);
+        }
+        while (!q.empty() && pre[q.back()] >= pre[i])
+        {
+            q.pop_back();
+        }
+        q.push_back(i);
     }
-};
-
-Matrix qpow(Matrix a, ll b)
-{
-    Matrix res(a.size);
-    for (int i = 0; i < a.size; i++)
-        res.v[i][i] = 1;
-    while (b > 0)
-    {
-        if (b & 1)
-            res = res * a;
-        a = a * a;
-        b >>= 1;
-    }
-    return res;
+    return ans;
 }
-
-ll power(ll a, ll b)
+ll maxSubarrayAtLeastK(const vector<ll> &a, int k)
 {
-    ll res = 1;
-    a %= MOD;
-    while (b > 0)
+    int n = a.size();
+    vector<ll> pre(n + 1, 0);
+    for (int i = 1; i <= n; i++)
     {
-        if (b & 1)
-            res = res * a % MOD;
-        a = a * a % MOD;
-        b >>= 1;
+        pre[i] = pre[i - 1] + a[i - 1];
     }
-    return res;
+    //[l,r]的区间和等于pre[r+1]-pre[l]
+    ll ans = LLONG_MIN;
+    ll minPre = LLONG_MAX;
+    for (int i = k; i <= n; i++)
+    {
+
+        minPre = min(minPre, pre[i - k]);
+        ans = max(ans, pre[i] - minPre);
+    }
+
+    return ans;
 }
-
-ll C[10][10];
-
 int main()
 {
     ios::sync_with_stdio(false);
     cin.tie(nullptr);
-
-    int m, k;
-    ll c;
-    if (!(cin >> m >> k >> c))
-        return 0;
-
-    for (int i = 0; i <= 10; i++)
+    int n, k;
+    ll x;
+    cin >> n >> k >> x;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++)
     {
-        C[i][0] = 1;
-        for (int j = 1; j <= i; j++)
-            C[i][j] = (C[i - 1][j - 1] + C[i - 1][j]) % MOD;
-    }
-
-    vector<ll> a(m + 1), f(m + 1), b(k + 1);
-    for (int i = 1; i <= m; i++)
         cin >> a[i];
-    for (int i = 1; i <= m; i++)
-        cin >> f[i];
-    for (int i = 0; i <= k; i++)
-        cin >> b[i];
-
-    // 状态向量 V_n = [f_n, f_n-1, ..., f_n-m+1, c^n, n^k, n^k-1, ..., n^0]
-    int size = m + k + 2;
-    Matrix M(size);
-
-    for (int j = 1; j <= m; j++)
-        M.v[0][j - 1] = a[j] % MOD;
-    M.v[0][m] = c % MOD;
-    for (int p = 0; p <= k; p++)
-    {
-        ll coeff = 0;
-        for (int i = p; i <= k; i++)
-        {
-            coeff = (coeff + b[i] % MOD * C[i][p]) % MOD;
-        }
-        M.v[0][m + 1 + (k - p)] = coeff;
     }
-
-    for (int i = 1; i < m; i++)
-        M.v[i][i - 1] = 1;
-
-    M.v[m][m] = c % MOD;
-
-    for (int p = 0; p <= k; p++)
+    // 如果区间长度小于等于k,等价于a[i]+x的区间最大子段和
+    vector<ll> b(n);
+    for (int i = 0; i < n; i++)
     {
-        int row = m + 1 + (k - p);
-        for (int j = 0; j <= p; j++)
-        {
-            int col = m + 1 + (k - j);
-            M.v[row][col] = C[p][j];
-        }
+        b[i] = a[i] + x;
     }
-
-    int q;
-    cin >> q;
-    while (q--)
+    ll temp1 = maxSubarrayAtMostK(b, k);
+    // 如果区间长度大于k,等价于a[i]-x,最后加上2kx
+    vector<ll> c(n);
+    for (int i = 0; i < n; i++)
     {
-        ll qi;
-        cin >> qi;
-        if (qi <= m)
-        {
-            cout << f[qi] % MOD << "\n";
-            continue;
-        }
-
-        vector<ll> Vm(size);
-        for (int i = 0; i < m; i++)
-            Vm[i] = f[m - i] % MOD;
-        Vm[m] = power(c, m);
-        for (int i = 0; i <= k; i++)
-            Vm[m + 1 + (k - i)] = power(m, i);
-
-        Matrix resM = qpow(M, qi - m);
-
-        ll ans = 0;
-        for (int i = 0; i < size; i++)
-        {
-            ans = (ans + resM.v[0][i] * Vm[i]) % MOD;
-        }
-        cout << ans << " ";
+        c[i] = a[i] - x;
     }
+    ll ans = temp1;
 
+    if (k + 1 <= n)
+    {
+        ll temp2 = maxSubarrayAtLeastK(c, k + 1);
+        ans = max(ans, temp2 + 2LL * k * x);
+    }
+    cout << max(0LL, ans);
     return 0;
 }
