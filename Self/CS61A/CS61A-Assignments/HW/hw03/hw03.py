@@ -24,7 +24,17 @@ def num_eights(n):
     ...       ['Assign', 'AnnAssign', 'AugAssign', 'NamedExpr', 'For', 'While'])
     True
     """
-    "*** YOUR CODE HERE ***"
+
+    def solve(x):
+        if x < 10:
+            if x == 8:
+                return 1
+            return 0
+        if x % 10 == 8:
+            return solve(x // 10) + 1
+        return solve(x // 10)
+
+    return solve(n)
 
 
 def digit_distance(n):
@@ -46,7 +56,9 @@ def digit_distance(n):
     ...       ['For', 'While'])
     True
     """
-    "*** YOUR CODE HERE ***"
+    if n < 10:
+        return 0
+    return abs(n % 10 - (n // 10) % 10) + digit_distance(n // 10)
 
 
 def interleaved_sum(n, odd_func, even_func):
@@ -70,7 +82,16 @@ def interleaved_sum(n, odd_func, even_func):
     >>> check(HW_SOURCE_FILE, 'interleaved_sum', ['BitAnd', 'BitOr', 'BitXor']) # ban bitwise operators, don't worry about these if you don't know what they are
     True
     """
-    "*** YOUR CODE HERE ***"
+
+    def help(k):
+        if k > n:
+            return 0
+        elif k == n:
+            return odd_func(k)
+        else:
+            return odd_func(k) + even_func(k + 1) + help(k + 2)
+
+    return help(1)
 
 
 def next_smaller_dollar(bill):
@@ -85,6 +106,7 @@ def next_smaller_dollar(bill):
         return 5
     elif bill == 5:
         return 1
+
 
 def count_dollars(total):
     """Return the number of ways to make change.
@@ -106,7 +128,17 @@ def count_dollars(total):
     >>> check(HW_SOURCE_FILE, 'count_dollars', ['While', 'For'])
     True
     """
-    "*** YOUR CODE HERE ***"
+
+    def solve(amount, cur):
+        if amount == 0:
+            return 1
+        if amount < 0:
+            return 0
+        if cur is None:
+            return 0
+        return solve(amount - cur, cur) + solve(amount, next_smaller_dollar(cur))
+
+    return solve(total, 100)
 
 
 def next_larger_dollar(bill):
@@ -121,6 +153,7 @@ def next_larger_dollar(bill):
         return 50
     elif bill == 50:
         return 100
+
 
 def count_dollars_upward(total):
     """Return the number of ways to make change using bills.
@@ -142,12 +175,23 @@ def count_dollars_upward(total):
     >>> check(HW_SOURCE_FILE, 'count_dollars_upward', ['While', 'For'])
     True
     """
-    "*** YOUR CODE HERE ***"
+
+    def solve(amount, cur):
+        if amount == 0:
+            return 1
+        if amount < 0:
+            return 0
+        if cur is None:
+            return 0
+        return solve(amount - cur, cur) + solve(amount, next_larger_dollar(cur))
+
+    return solve(total, 1)
 
 
 def print_move(origin, destination):
     """Print instructions to move a disk."""
     print("Move the top disk from rod", origin, "to rod", destination)
+
 
 def move_stack(n, start, end):
     """Print the moves required to move n disks on the start pole to the end
@@ -177,10 +221,16 @@ def move_stack(n, start, end):
     Move the top disk from rod 1 to rod 3
     """
     assert 1 <= start <= 3 and 1 <= end <= 3 and start != end, "Bad start/end"
-    "*** YOUR CODE HERE ***"
+    if n == 1:
+        print_move(start, end)
+        return
+    move_stack(n - 1, start, 6 - start - end)
+    move_stack(1, start, end)
+    move_stack(n - 1, 6 - start - end, end)
 
 
 from operator import sub, mul
+
 
 def make_anonymous_factorial():
     """Return the value of an expression that computes factorial.
@@ -193,5 +243,4 @@ def make_anonymous_factorial():
     ...     ['Assign', 'AnnAssign', 'AugAssign', 'NamedExpr', 'FunctionDef', 'Recursion'])
     True
     """
-    return 'YOUR_EXPRESSION_HERE'
-
+    return
