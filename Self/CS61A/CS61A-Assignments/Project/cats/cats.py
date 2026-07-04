@@ -357,7 +357,13 @@ def time_per_word(words, timestamps_per_player):
     """
     tpp = timestamps_per_player  # A shorter name (for convenience)
     # BEGIN PROBLEM 9
-    times = []  # You may remove this line
+    times = []
+    for x in tpp:
+        temp = []
+        for i in range(len(x)):
+            if i != 0:
+                temp.append(x[i] - x[i - 1])
+        times.append(temp)
     # END PROBLEM 9
     return {"words": words, "times": times}
 
