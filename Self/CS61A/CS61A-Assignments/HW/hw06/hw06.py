@@ -1,4 +1,5 @@
-passphrase = 'REPLACE_THIS_WITH_PASSPHRASE'
+passphrase = "2bf925d47c03503d3ebe5a6fc12d479b8d12f14c0494b43deba963a0"
+
 
 def midsem_survey(p):
     """
@@ -7,7 +8,8 @@ def midsem_survey(p):
     '2bf925d47c03503d3ebe5a6fc12d479b8d12f14c0494b43deba963a0'
     """
     import hashlib
-    return hashlib.sha224(p.encode('utf-8')).hexdigest()
+
+    return hashlib.sha224(p.encode("utf-8")).hexdigest()
 
 
 class VendingMachine:
@@ -47,16 +49,21 @@ class VendingMachine:
     >>> w.vend()
     'Here is your soda.'
     """
+
     def __init__(self, product, price):
         """Set the product and its price, as well as other instance attributes."""
-        "*** YOUR CODE HERE ***"
+        self.product = product
+        self.price = price
+        self.restore = 0
+        self.balance = 0
 
     def restock(self, n):
         """Add n to the stock and return a message about the updated stock level.
 
         E.g., Current candy stock: 3
         """
-        "*** YOUR CODE HERE ***"
+        self.restore += n
+        return f"Current {self.product} stock: {self.restore}"
 
     def add_funds(self, n):
         """If the machine is out of stock, return a message informing the user to restock
@@ -68,7 +75,10 @@ class VendingMachine:
 
         E.g., Current balance: $4
         """
-        "*** YOUR CODE HERE ***"
+        if self.restore <= 0:
+            return f"Nothing left to vend. Please restock. Here is your ${n}."
+        self.balance += n
+        return f"Current balance: ${self.balance}"
 
     def vend(self):
         """Dispense the product if there is sufficient stock and funds and
@@ -81,7 +91,20 @@ class VendingMachine:
         E.g., Nothing left to vend. Please restock.
               Please add $3 more funds.
         """
-        "*** YOUR CODE HERE ***"
+        if self.restore != 0:
+            if self.balance > self.price:
+                self.restore -= 1
+                diff = self.balance - self.price
+                self.balance = 0
+                return f"Here is your {self.product} and ${diff} change."
+            elif self.balance == self.price:
+                self.restore -= 1
+                self.balance -= self.price
+                return f"Here is your {self.product}."
+            else:
+                return f"Please add ${self.price-self.balance} more funds."
+
+        return "Nothing left to vend. Please restock."
 
 
 def store_digits(n):
@@ -103,7 +126,12 @@ def store_digits(n):
     >>> cleaned = re.sub(r"#.*\\n", '', re.sub(r'"{3}[\s\S]*?"{3}', '', inspect.getsource(store_digits)))
     >>> print("Do not use str or reversed!") if any([r in cleaned for r in ["str", "reversed"]]) else None
     """
-    "*** YOUR CODE HERE ***"
+    s = Link(n % 10)
+    n //= 10
+    while n:
+        s = Link(n % 10, s)
+        n //= 10
+    return s
 
 
 def deep_map_mut(func, s):
@@ -125,7 +153,13 @@ def deep_map_mut(func, s):
     >>> print(link1)
     <9 <16> 25 36>
     """
-    "*** YOUR CODE HERE ***"
+    if s is Link.empty:
+        return
+    if isinstance(s.first, Link):
+        deep_map_mut(func, s.first)
+    else:
+        s.first = func(s.first)
+    deep_map_mut(func, s.rest)
 
 
 def two_list(vals, counts):
@@ -146,7 +180,15 @@ def two_list(vals, counts):
     >>> c
     Link(1, Link(1, Link(3, Link(3, Link(2)))))
     """
-    "*** YOUR CODE HERE ***"
+    s = Link.empty
+    i = len(vals) - 1
+    while i != -1:
+        j = counts[i]
+        while j:
+            s = Link(vals[i], s)
+            j -= 1
+        i -= 1
+    return s
 
 
 class Link:
@@ -169,6 +211,7 @@ class Link:
     >>> print(s)                             # Prints str(s)
     <5 7 <8 9>>
     """
+
     empty = ()
 
     def __init__(self, first, rest=empty):
@@ -178,15 +221,14 @@ class Link:
 
     def __repr__(self):
         if self.rest is not Link.empty:
-            rest_repr = ', ' + repr(self.rest)
+            rest_repr = ", " + repr(self.rest)
         else:
-            rest_repr = ''
-        return 'Link(' + repr(self.first) + rest_repr + ')'
+            rest_repr = ""
+        return "Link(" + repr(self.first) + rest_repr + ")"
 
     def __str__(self):
-        string = '<'
+        string = "<"
         while self.rest is not Link.empty:
-            string += str(self.first) + ' '
+            string += str(self.first) + " "
             self = self.rest
-        return string + str(self.first) + '>'
-
+        return string + str(self.first) + ">"
