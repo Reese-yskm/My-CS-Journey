@@ -17,6 +17,7 @@ class Account:
     >>> a.time_to_retire(100)
     117
     """
+
     max_withdrawal = 10
     interest = 0.02
 
@@ -40,6 +41,12 @@ class Account:
         """Return the number of years until balance would grow to amount."""
         assert self.balance > 0 and amount > 0 and self.interest > 0
         "*** YOUR CODE HERE ***"
+        ans = 0
+        b = self.balance
+        while b < amount:
+            b = b * (1 + self.interest)
+            ans += 1
+        return ans
 
 
 class FreeChecking(Account):
@@ -66,10 +73,21 @@ class FreeChecking(Account):
     >>> ch.withdraw(5)  # Not enough to cover fee + withdraw
     'Insufficient funds'
     """
+
     withdraw_fee = 1
     free_withdrawals = 2
 
-    "*** YOUR CODE HERE ***"
+    def withdraw(self, amount):
+        final = amount
+        if self.free_withdrawals <= 0:
+            final = amount + self.withdraw_fee
+        self.free_withdrawals -= 1
+        if final > self.balance:
+            return "Insufficient funds"
+        if final > self.max_withdrawal:
+            return "Can't withdraw that amount"
+        self.balance = self.balance - final
+        return self.balance
 
 
 def without(s, i):
@@ -86,6 +104,16 @@ def without(s, i):
     True
     """
     "*** YOUR CODE HERE ***"
+    f = Link.empty
+    t = []
+    os = s
+    while s:
+        t.append(s.first)
+        s = s.rest
+    for idx in range(len(t) - 1, -1, -1):
+        if idx != i:
+            f = Link(t[idx], f)
+    return f
 
 
 def duplicate_link(s, val):
@@ -104,7 +132,16 @@ def duplicate_link(s, val):
     >>> z
     Link(1, Link(2, Link(2, Link(2, Link(2, Link(3))))))
     """
-    "*** YOUR CODE HERE ***"
+    f = Link.empty
+    t = []
+    while s:
+        t.append(s.first)
+        s = s.rest
+    for idx in range(len(t) - 1, -1, -1):
+        if t[idx] == val:
+            f = Link(t[idx], f)
+            f = Link(t[idx], f)
+    return f
 
 
 class Link:
@@ -127,6 +164,7 @@ class Link:
     >>> print(s)                             # Prints str(s)
     <5 7 <8 9>>
     """
+
     empty = ()
 
     def __init__(self, first, rest=empty):
@@ -136,15 +174,14 @@ class Link:
 
     def __repr__(self):
         if self.rest is not Link.empty:
-            rest_repr = ', ' + repr(self.rest)
+            rest_repr = ", " + repr(self.rest)
         else:
-            rest_repr = ''
-        return 'Link(' + repr(self.first) + rest_repr + ')'
+            rest_repr = ""
+        return "Link(" + repr(self.first) + rest_repr + ")"
 
     def __str__(self):
-        string = '<'
+        string = "<"
         while self.rest is not Link.empty:
-            string += str(self.first) + ' '
+            string += str(self.first) + " "
             self = self.rest
-        return string + str(self.first) + '>'
-
+        return string + str(self.first) + ">"
