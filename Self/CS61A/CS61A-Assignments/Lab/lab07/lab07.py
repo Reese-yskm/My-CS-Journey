@@ -132,16 +132,12 @@ def duplicate_link(s, val):
     >>> z
     Link(1, Link(2, Link(2, Link(2, Link(2, Link(3))))))
     """
-    f = Link.empty
-    t = []
-    while s:
-        t.append(s.first)
-        s = s.rest
-    for idx in range(len(t) - 1, -1, -1):
-        if t[idx] == val:
-            f = Link(t[idx], f)
-            f = Link(t[idx], f)
-    return f
+    while s is not Link.empty:
+        if s.first == val:
+            s.rest = Link(val, s.rest)
+            s = s.rest.rest
+        else:
+            s = s.rest
 
 
 class Link:
